@@ -235,9 +235,31 @@ class AuthSetPasswordTestCase(unittest.TestCase):
         custom_env = self.data_dir / "custom.env"
         custom_env.write_text("ADMIN_AUTH_ENABLED=true\n", encoding="utf-8")
 
-        with patch.dict(os.environ, {"ENV_FILE": str(custom_env)}):
-            auth._auth_enabled = None
-            self.assertTrue(auth._is_auth_enabled_from_env())
+        with patch.object(auth, "_ensure_env_loaded"):
+            with patch.dict(os.environ, {"ENV_FILE": str(custom_env)}):
+                auth._auth_enabled = None
+                self.assertTrue(auth._is_auth_enabled_from_env())
+
+    def test_is_auth_enabled_from_env_falls_back_to_process_environment(self) -> None:
+        missing_env = self.data_dir / "missing.env"
+
+        with patch.object(auth, "_ensure_env_loaded"):
+            with patch.dict(
+                os.environ,
+                {"ENV_FILE": str(missing_env), "ADMIN_AUTH_ENABLED": "true"},
+            ):
+                self.assertTrue(auth._is_auth_enabled_from_env())
+
+    def test_is_auth_enabled_from_env_prefers_explicit_file_value(self) -> None:
+        custom_env = self.data_dir / "custom.env"
+        custom_env.write_text("ADMIN_AUTH_ENABLED=false\n", encoding="utf-8")
+
+        with patch.object(auth, "_ensure_env_loaded"):
+            with patch.dict(
+                os.environ,
+                {"ENV_FILE": str(custom_env), "ADMIN_AUTH_ENABLED": "true"},
+            ):
+                self.assertFalse(auth._is_auth_enabled_from_env())
 
     def test_refresh_auth_state_clears_session_secret_cache(self) -> None:
         def run():

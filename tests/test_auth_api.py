@@ -61,6 +61,7 @@ class AuthApiTestCase(unittest.TestCase):
         Config.reset_instance()
         os.environ.pop("ENV_FILE", None)
         os.environ.pop("DATABASE_PATH", None)
+        _reset_auth_globals()
         self.temp_dir.cleanup()
 
     def _read_auth_enabled_from_env(self) -> bool:
