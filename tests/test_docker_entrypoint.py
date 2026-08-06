@@ -58,6 +58,7 @@ def test_docker_compose_injects_env_without_single_file_env_mount() -> None:
     assert "../.env:/app/.env" not in common["volumes"]
     assert not any(str(volume).startswith("../.env:") for volume in common["volumes"])
     assert "../longbridge_tokens:/home/dsa/.longbridge" in common["volumes"]
+    assert "host.docker.internal:host-gateway" in common["extra_hosts"]
 
 
 def test_docker_compose_default_memory_recommendation_is_not_512m() -> None:

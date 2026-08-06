@@ -32,6 +32,10 @@ x-common: &common
     # 如需覆盖前端静态资源，可挂载本地 static 目录
     # - ../static:/app/static:ro
 
+  # Linux containers need this mapping to reach services running on the Docker host.
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+
   environment:
     - TZ=Asia/Shanghai
 

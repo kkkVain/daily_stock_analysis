@@ -1,5 +1,5 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApiError, createParsedApiError } from '../../api/error';
 import { AuthProvider, useAuth } from '../AuthContext';
 
@@ -48,6 +48,68 @@ const Probe = () => {
 describe('AuthContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('retries local connection failures while the backend starts', async () => {
+    vi.useFakeTimers();
+    getStatus
+      .mockRejectedValueOnce(
+        createApiError(
+          createParsedApiError({
+            title: '无法连接本地服务',
+            message: 'Connection refused',
+            category: 'local_connection_failed',
+          })
+        )
+      )
+      .mockResolvedValueOnce({
+        authEnabled: true,
+        loggedIn: true,
+        passwordSet: true,
+        passwordChangeable: true,
+        setupState: 'enabled',
+      });
+
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>
+    );
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1500);
+    });
+
+    expect(getStatus).toHaveBeenCalledTimes(2);
+    expect(screen.getByTestId('status')).toHaveTextContent('logged-in');
+    expect(resetDashboardState).not.toHaveBeenCalled();
+  });
+
+  it('does not retry HTTP failures', async () => {
+    getStatus.mockRejectedValueOnce(
+      createApiError(
+        createParsedApiError({
+          title: '服务错误',
+          message: 'Internal server error',
+          status: 500,
+          category: 'http_error',
+        }),
+        { response: { status: 500 } }
+      )
+    );
+
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>
+    );
+
+    await waitFor(() => expect(resetDashboardState).toHaveBeenCalledTimes(1));
+    expect(getStatus).toHaveBeenCalledTimes(1);
   });
 
   it('refreshes auth state after a successful login', async () => {
