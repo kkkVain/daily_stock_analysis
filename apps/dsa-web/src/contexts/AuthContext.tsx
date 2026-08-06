@@ -1,8 +1,16 @@
 import type React from 'react';
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { createParsedApiError, getParsedApiError, type ParsedApiError } from '../api/error';
+import {
+  createParsedApiError,
+  getParsedApiError,
+  isLocalConnectionFailure,
+  type ParsedApiError,
+} from '../api/error';
 import { authApi } from '../api/auth';
 import { useStockPoolStore } from '../stores';
+
+const AUTH_STATUS_MAX_RETRIES = 12;
+const AUTH_STATUS_RETRY_DELAY_MS = 1500;
 
 type AuthContextValue = {
   authEnabled: boolean;
@@ -50,26 +58,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchStatus = useCallback(async () => {
     setIsLoading(true);
     setLoadError(null);
-    try {
-      const status = await authApi.getStatus();
-      setAuthEnabled(status.authEnabled);
-      setLoggedIn(status.loggedIn);
-      setPasswordSet(status.passwordSet ?? false);
-      setPasswordChangeable(status.passwordChangeable ?? false);
-      setSetupState(status.setupState);
-      if (status.authEnabled && !status.loggedIn) {
+
+    for (let attempt = 0; ; attempt += 1) {
+      try {
+        const status = await authApi.getStatus();
+        setAuthEnabled(status.authEnabled);
+        setLoggedIn(status.loggedIn);
+        setPasswordSet(status.passwordSet ?? false);
+        setPasswordChangeable(status.passwordChangeable ?? false);
+        setSetupState(status.setupState);
+        if (status.authEnabled && !status.loggedIn) {
+          useStockPoolStore.getState().resetDashboardState();
+        }
+        setIsLoading(false);
+        return;
+      } catch (err) {
+        if (isLocalConnectionFailure(err) && attempt < AUTH_STATUS_MAX_RETRIES) {
+          await new Promise<void>((resolve) => {
+            window.setTimeout(resolve, AUTH_STATUS_RETRY_DELAY_MS);
+          });
+          continue;
+        }
+
+        setLoadError(getParsedApiError(err));
+        setAuthEnabled(false);
+        setLoggedIn(false);
+        setPasswordSet(false);
+        setPasswordChangeable(false);
+        setSetupState('no_password');
         useStockPoolStore.getState().resetDashboardState();
+        setIsLoading(false);
+        return;
       }
-    } catch (err) {
-      setLoadError(getParsedApiError(err));
-      setAuthEnabled(false);
-      setLoggedIn(false);
-      setPasswordSet(false);
-      setPasswordChangeable(false);
-      setSetupState('no_password');
-      useStockPoolStore.getState().resetDashboardState();
-    } finally {
-      setIsLoading(false);
     }
   }, []);
 

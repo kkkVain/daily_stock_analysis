@@ -308,7 +308,11 @@ docker-compose -f ./docker/docker-compose.yml build --no-cache
 rm /opt/stock-analyzer/data/*.lock
 ```
 
-### 4. 内存不足
+### 4. 自定义 LLM 网关在直接部署模式下连接失败
+
+`host.docker.internal` 是 Docker 容器访问宿主机的专用域名。Compose 已为 Linux 容器配置该映射；如果使用 venv 或 systemd 直接运行 `main.py`，请将对应的 `LLM_*_BASE_URL` 改为 `127.0.0.1` 或代理实际可达地址。
+
+### 5. 内存不足
 
 默认 Compose 已推荐 `1G`。如果仍出现 OOM 或平台杀掉容器，请提高 `docker-compose.yml` 中的内存限制；同时跑 `server + analyzer`、多股票、大盘复盘、图片报告或选股时建议 `2G+`：
 ```yaml
@@ -322,7 +326,7 @@ deploy:
 
 低配环境只能使用 `512M` 时，建议设置 `MAX_WORKERS=1`，只启动 `server` 或 `analyzer` 其中一个服务，并减少非必要的大盘复盘、新闻扩展和图片报告任务。
 
-### 5. WebUI 打开后 UI 元素异常变大 / 布局错乱
+### 6. WebUI 打开后 UI 元素异常变大 / 布局错乱
 
 **症状**：能访问 8000 端口，但页面上的文字、按钮、卡片异常放大，没有正常布局。
 

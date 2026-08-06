@@ -5,6 +5,7 @@ import tempfile
 import unittest
 from datetime import datetime
 from pathlib import Path
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
@@ -69,12 +70,13 @@ class FakeUsageDbManager:
 
 class UsageDashboardApiTestCase(unittest.TestCase):
     def test_dashboard_returns_token_summary_and_recent_calls(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            app = create_app(static_dir=Path(temp_dir))
-            app.dependency_overrides[get_database_manager] = lambda: FakeUsageDbManager()
-            client = TestClient(app)
+        with patch("api.middlewares.auth.is_auth_enabled", return_value=False):
+            with tempfile.TemporaryDirectory() as temp_dir:
+                app = create_app(static_dir=Path(temp_dir))
+                app.dependency_overrides[get_database_manager] = lambda: FakeUsageDbManager()
+                client = TestClient(app)
 
-            response = client.get("/api/v1/usage/dashboard?period=today&limit=10")
+                response = client.get("/api/v1/usage/dashboard?period=today&limit=10")
 
         self.assertEqual(response.status_code, 200)
         body = response.json()

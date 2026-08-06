@@ -296,7 +296,11 @@ Check proxy configuration, ensure server can access Gemini API.
 rm /opt/stock-analyzer/data/*.lock
 ```
 
-### 4. Insufficient memory
+### 4. Custom LLM gateway fails in a direct deployment
+
+`host.docker.internal` is a Docker-specific hostname for reaching services on the host. Compose configures this mapping for Linux containers. When running `main.py` directly through a virtual environment or systemd, set the relevant `LLM_*_BASE_URL` to `127.0.0.1` or another address reachable from that process.
+
+### 5. Insufficient memory
 
 The default Compose recommendation is already `1G`. If the container still hits OOM or is killed by the platform, raise the memory limit in `docker-compose.yml`; use `2G+` when running `server + analyzer` together, multi-stock analysis, market review, image reports, or screening:
 ```yaml
