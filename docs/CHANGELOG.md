@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [新功能] 将技术规则引擎和MIT许可的Kronos推理运行时内置到DSA，默认使用Kronos-base并把首次下载的模型持久化到data目录；保留外部引擎和vn.py评价兼容模式。
 - [新功能] #1595 P1.5 新增 Provider Cache Capability Registry，按 provider、api surface、gateway 和 verification status 建模 prompt cache 能力，未知 OpenAI-compatible route 默认 telemetry only。
 - [改进] #1595 P1 新增 prompt cache telemetry / analysis-path hints / diagnostics 最小配置，默认不改变 provider 请求 shape，并复用 LLM usage HMAC secret 做 domain-separated cache hint 派生。
 - [修复] 修复移动端问股页面布局问题：将容器高度从 `100vh` 改为 `100dvh`，解决 iOS Safari/Android Chrome 地址栏遮挡导致聊天区域不可见的问题；同时为 `.chat-prose table` 添加 `overflow-x: auto` 支持，避免 AI 分析报告中的宽表格在手机端被截断。

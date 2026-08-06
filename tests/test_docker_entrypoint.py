@@ -60,14 +60,14 @@ def test_docker_compose_injects_env_without_single_file_env_mount() -> None:
     assert "../longbridge_tokens:/home/dsa/.longbridge" in common["volumes"]
 
 
-def test_docker_compose_default_memory_recommendation_is_not_512m() -> None:
+def test_docker_compose_default_memory_supports_bundled_kronos() -> None:
     compose_text = (REPO_ROOT / "docker" / "docker-compose.yml").read_text(encoding="utf-8")
     compose = yaml.safe_load(compose_text)
     resources = compose["x-common"]["deploy"]["resources"]
 
-    assert resources["limits"]["memory"] == "1G"
-    assert resources["reservations"]["memory"] == "512M"
-    assert "512M" in compose_text
+    assert resources["limits"]["memory"] == "4G"
+    assert resources["reservations"]["memory"] == "2G"
+    assert "Kronos-base" in compose_text
     assert "MAX_WORKERS=1" in compose_text
 
 

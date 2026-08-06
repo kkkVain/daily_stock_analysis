@@ -67,3 +67,29 @@ def test_runner_failure_is_fail_open(tmp_path):
     with patch("src.services.quant_enrichment_service.subprocess.run", side_effect=TimeoutError):
         attach_quant_enrichment(result, _config(tmp_path))
     assert result.quant_enrichment["status"] == "unavailable"
+
+
+def test_bundled_engine_is_used_without_external_abu_paths(tmp_path):
+    config = _config(tmp_path)
+    config.quant_abu_root = ""
+    config.quant_abu_config = ""
+    config.quant_vnpy_validation_enabled = False
+    config.database_path = str(tmp_path / "data" / "stock_analysis.db")
+    result = SimpleNamespace(code="517520", quant_enrichment=None)
+
+    def fake_run(command, **kwargs):
+        assert command[1:3] == ["-m", "src.quant_engine"]
+        assert "--data-dir" in command
+        assert kwargs["cwd"] == Path(__file__).resolve().parents[1]
+        assert kwargs["env"]["HF_HOME"].endswith("data/quant_engine/models")
+        output_path = Path(command[command.index("--json-output") + 1])
+        output_path.write_text(
+            json.dumps({"results": [{"symbol": "sh517520", "history": []}]}),
+            encoding="utf-8",
+        )
+        return SimpleNamespace(returncode=0)
+
+    with patch("src.services.quant_enrichment_service.subprocess.run", side_effect=fake_run):
+        attach_quant_enrichment(result, config)
+
+    assert result.quant_enrichment == {"symbol": "sh517520", "status": "ok"}

@@ -36,6 +36,13 @@ numpy>=1.24.0               # Numeric computing
 json-repair>=0.55.1         # JSON repair
 orjson>=3.10,<4             # LiteLLM runtime JSON dependency; explicitly bundled in desktop builds
 
+# Bundled technical-rule engine and Kronos-base inference
+torch>=2.0.0,<3
+einops>=0.8.1
+huggingface_hub>=0.33.1
+safetensors>=0.6.2
+tqdm>=4.67.1
+
 # AI analysis
 # Keep the historical minimum version while excluding quarantined builds and avoiding future major breaks.
 litellm>=1.80.10,!=1.82.7,!=1.82.8,<2.0.0   # Unified LLM client (Gemini/Anthropic/OpenAI/DeepSeek etc.)
