@@ -47,7 +47,9 @@ RUN groupadd -g 1000 dsa && \
 COPY requirements.txt .
 
 # 安装 Python 依赖
-RUN --mount=type=cache,target=/root/.cache/pip pip install -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --index-url https://download.pytorch.org/whl/cpu "torch>=2.0.0,<3" && \
+    pip install -r requirements.txt
 
 # 复制应用代码
 COPY *.py ./
@@ -65,7 +67,7 @@ RUN mkdir -p /tmp/futu-sdk-smoke-home && \
     rm -rf /tmp/futu-sdk-smoke-home
 
 # 确保数据目录存在并授权给 non-root 用户
-RUN mkdir -p /app/data /app/logs /app/reports && \
+RUN mkdir -p /app/data /app/data/quant_engine/models /app/logs /app/reports && \
     chown -R dsa:dsa /app && \
     chmod +x /usr/local/bin/docker-entrypoint.sh
 

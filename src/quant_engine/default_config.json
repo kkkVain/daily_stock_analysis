@@ -1,0 +1,38 @@
+{
+  "symbols": ["sh000001"],
+  "provider": "eastmoney",
+  "csv_dir": "market_data",
+  "data_dir": "data/quant_engine",
+  "adjustments": {
+    "sh588170": [
+      {
+        "effective_date": "2026-07-06",
+        "ratio": 3.0,
+        "description": "ETF份额拆分"
+      }
+    ]
+  },
+  "kronos": {
+    "enabled": true,
+    "model": "NeoQuasar/Kronos-base",
+    "tokenizer": "NeoQuasar/Kronos-Tokenizer-base",
+    "lookback": 400,
+    "prediction_days": 5,
+    "path_count": 20,
+    "seed": 20260726,
+    "temperature": 0.8,
+    "top_p": 0.9
+  },
+  "signals": {
+    "recent_days": 7,
+    "ma_pairs": [[5, 20], [20, 60]],
+    "breakout_windows": [20, 60],
+    "rsi_period": 14,
+    "rsi_oversold": 30,
+    "rsi_overbought": 70,
+    "boll_period": 20,
+    "volume_period": 20,
+    "volume_multiple": 2.0,
+    "atr_period": 14
+  }
+}

@@ -1,0 +1,10 @@
+Kronos inference runtime
+
+Source: https://github.com/shiyu-coder/Kronos
+Imported revision: 67b630e67f6a18c9e9be918d9b4337c960db1e9a
+Copyright (c) 2025 ShiYu
+License: MIT (see LICENSE in this directory)
+
+Only the inference modules required by DSA are included. Model and tokenizer
+weights are downloaded separately from the NeoQuasar repositories on
+Hugging Face and are not stored in this source repository.

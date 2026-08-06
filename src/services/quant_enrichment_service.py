@@ -7,10 +7,13 @@ import logging
 import subprocess
 import sys
 import tempfile
+import os
+import threading
 from pathlib import Path
 from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
+_BUNDLED_ENGINE_LOCK = threading.Lock()
 
 
 class QuantEnrichmentService:
@@ -37,30 +40,56 @@ class QuantEnrichmentService:
                 "status": "unsupported",
                 "error": "当前量化增强仅支持六位A股和ETF代码；美股、港股暂不进入ABU/Kronos/vn.py链路",
             }
-        abu_root = Path(getattr(self.config, "quant_abu_root", "")).expanduser()
-        abu_config = Path(getattr(self.config, "quant_abu_config", "")).expanduser()
-        if not abu_root.is_dir() or not abu_config.is_file():
-            logger.warning("量化增强已启用，但ABU路径或配置不存在")
-            return {"status": "unavailable", "error": "ABU路径或配置不存在"}
+        project_root = Path(__file__).resolve().parents[2]
+        external_root_raw = str(getattr(self.config, "quant_abu_root", "") or "").strip()
+        external_config_raw = str(getattr(self.config, "quant_abu_config", "") or "").strip()
+        use_external = bool(external_root_raw or external_config_raw)
+        if use_external:
+            engine_root = Path(external_root_raw).expanduser()
+            engine_config = Path(external_config_raw).expanduser()
+            engine_module = "daily_signal"
+            if not engine_root.is_dir() or not engine_config.is_file():
+                logger.warning("量化增强已启用，但外部量化引擎路径或配置不存在")
+                return {"status": "unavailable", "error": "外部量化引擎路径或配置不存在"}
+        else:
+            engine_root = project_root
+            engine_config = project_root / "src" / "quant_engine" / "default_config.json"
+            engine_module = "src.quant_engine"
+
+        database_path = Path(str(getattr(self.config, "database_path", "./data/stock_analysis.db"))).expanduser()
+        if not database_path.is_absolute():
+            database_path = project_root / database_path
+        quant_data_dir = database_path.resolve().parent / "quant_engine"
+        quant_data_dir.mkdir(parents=True, exist_ok=True)
         timeout = max(1, int(getattr(self.config, "quant_enrichment_timeout_seconds", 600)))
         with tempfile.TemporaryDirectory(prefix="dsa-quant-") as tmp:
             tmp_path = Path(tmp)
             batch_path = tmp_path / "abu.json"
             command = [
                 getattr(self.config, "quant_abu_python", "") or sys.executable,
-                "-m", "daily_signal", "--config", str(abu_config),
-                "--symbols", symbol, "--json-output", str(batch_path), "--machine-only",
+                "-m", engine_module, "--config", str(engine_config),
+                "--symbols", symbol, "--data-dir", str(quant_data_dir),
+                "--json-output", str(batch_path), "--machine-only",
             ]
             try:
-                subprocess.run(command, cwd=abu_root, check=True, timeout=timeout, capture_output=True, text=True)
+                child_env = os.environ.copy()
+                child_env.setdefault("HF_HOME", str(quant_data_dir / "models"))
+                # Kronos-base is memory intensive. Serialize inference inside a
+                # DSA process so a small watchlist cannot load several models at once.
+                with _BUNDLED_ENGINE_LOCK:
+                    completed = subprocess.run(
+                        command, cwd=engine_root, check=True, timeout=timeout,
+                        capture_output=True, text=True, env=child_env,
+                    )
                 batch = json.loads(batch_path.read_text(encoding="utf-8"))
                 payload = batch["results"][0]
             except Exception as exc:
-                logger.warning("[%s] ABU/Kronos量化增强失败: %s", code, exc)
-                return {"status": "unavailable", "error": f"ABU/Kronos运行失败: {type(exc).__name__}"}
+                stderr = str(getattr(locals().get("completed", None), "stderr", "") or "").strip()
+                logger.warning("[%s] 规则引擎/Kronos量化增强失败: %s%s", code, exc, f"; {stderr[-500:]}" if stderr else "")
+                return {"status": "unavailable", "error": f"规则引擎/Kronos运行失败: {type(exc).__name__}"}
 
             payload["status"] = "ok"
-            if getattr(self.config, "quant_vnpy_validation_enabled", True):
+            if getattr(self.config, "quant_vnpy_validation_enabled", False):
                 self._attach_validation(payload, tmp_path, timeout)
             payload.pop("history", None)
             return payload

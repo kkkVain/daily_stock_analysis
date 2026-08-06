@@ -469,7 +469,7 @@ docker-compose -f ./docker/docker-compose.yml up -d            # Start both mode
 docker-compose -f ./docker/docker-compose.yml logs -f server
 ```
 
-The default Compose file sets `limits.memory: 1G` and `reservations.memory: 512M` for each service. Use `512M` only for lightweight Web/API usage, single-stock runs, and low concurrency with `MAX_WORKERS=1`; use `1G` for normal full analysis, and `2G+` when running `server + analyzer` together, multi-stock analysis, market review, news expansion, image reports, or screening. If constrained to `512M`, avoid starting both services and reduce heavy features.
+The default Compose file sets `limits.memory: 4G` and `reservations.memory: 2G` so bundled Kronos-base can run, with `MAX_WORKERS=1` recommended. When quant enrichment is disabled, `512M` is only for lightweight Web/API usage, `1G` suits normal analysis, and other heavy workloads should use `2G+`.
 
 ### Run Official Images Directly
 

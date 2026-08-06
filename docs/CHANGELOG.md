@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [新功能] 将技术规则引擎和MIT许可的Kronos推理运行时内置到DSA，默认使用Kronos-base并把首次下载的模型持久化到data目录；保留外部引擎和vn.py评价兼容模式。
 - [修复] Docker Compose 为 Linux 容器恢复 `host.docker.internal:host-gateway` 映射，并在中英文部署文档中说明直接部署模式应使用实际可达的 LLM 网关地址。
 - [修复] Docker 仅通过 `env_file` 注入配置时，认证开关可回退读取进程环境；Web 在后端冷启动期间只对本地连接失败重试认证状态请求。
 - [修复] 将依赖外部 ABU/Kronos/vn.py 运行环境的量化增强开关与超时参数明确标记为 Web 设置隐藏的运维项，保持 `.env.example` 与配置注册表覆盖契约一致。

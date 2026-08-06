@@ -61,11 +61,11 @@ docker-compose -f ./docker/docker-compose.yml ps
 
 ### 3.1 资源建议
 
-默认 `docker/docker-compose.yml` 为每个服务设置 `limits.memory: 1G`、`reservations.memory: 512M`，这是完整分析场景的推荐起点。
+默认 `docker/docker-compose.yml` 为每个服务设置 `limits.memory: 4G`、`reservations.memory: 2G`，以支持内置 Kronos-base。关闭量化增强时可按下面的轻量档位降低资源。
 
 - 最低可尝试：`512M`，仅适合轻量 Web/API、单股、低并发场景，建议设置 `MAX_WORKERS=1`。
 - 推荐：`1G`，适合单独运行 `server` 或 `analyzer` 的常规分析。
-- 高负载：`2G+`，适合同时启动 `server + analyzer`、多股票、默认 `MAX_WORKERS=3`、大盘复盘、新闻扩展、图片报告或选股。
+- 高负载：`2G+`；使用内置 Kronos-base 时推荐 `4G`，并设置 `MAX_WORKERS=1`。
 
 如果只能使用 `512M`，请避免同时启动 `server` 和 `analyzer`，并关闭非必要的大盘复盘、新闻扩展和图片报告能力。
 

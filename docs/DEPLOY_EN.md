@@ -57,11 +57,11 @@ docker-compose -f ./docker/docker-compose.yml ps
 
 ### 3.1 Resource Recommendations
 
-The default `docker/docker-compose.yml` sets `limits.memory: 1G` and `reservations.memory: 512M` for each service. Treat this as the recommended starting point for full analysis workloads.
+The default `docker/docker-compose.yml` sets `limits.memory: 4G` and `reservations.memory: 2G` for each service so bundled Kronos-base can run. Lower the resources using the lightweight profiles below only when quant enrichment is disabled.
 
 - Minimum trial: `512M`, only for lightweight Web/API usage, single-stock runs, and low concurrency. Set `MAX_WORKERS=1`.
 - Recommended: `1G`, suitable for normal analysis when running either `server` or `analyzer`.
-- Heavy workloads: `2G+`, suitable when running `server + analyzer` together, multi-stock analysis, default `MAX_WORKERS=3`, market review, news expansion, image reports, or screening.
+- Heavy workloads: `2G+`; use `4G` and `MAX_WORKERS=1` for bundled Kronos-base.
 
 If you can only use `512M`, avoid starting both `server` and `analyzer`, and disable non-essential market review, news expansion, and image report features.
 

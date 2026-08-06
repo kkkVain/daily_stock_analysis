@@ -526,7 +526,7 @@ docker-compose -f ./docker/docker-compose.yml up -d            # 同时启动两
 docker-compose -f ./docker/docker-compose.yml logs -f server
 ```
 
-默认 Compose 为每个服务设置 `limits.memory: 1G`、`reservations.memory: 512M`。`512M` 仅建议用于轻量 Web/API、单股、低并发场景，并将 `MAX_WORKERS=1`；常规完整分析建议 `1G`，同时启动 `server + analyzer`、多股票、大盘复盘、新闻扩展、图片报告或选股建议 `2G+`。如果只能使用 `512M`，请避免同时启动两个服务并减少重型功能。
+默认 Compose 为每个服务设置 `limits.memory: 4G`、`reservations.memory: 2G`，以支持内置 Kronos-base，并建议 `MAX_WORKERS=1`。关闭量化增强后，`512M` 仅适合轻量 Web/API，常规分析建议 `1G`，其他高负载场景建议 `2G+`。
 
 ### 直接拉官方镜像运行
 
